@@ -1,0 +1,151 @@
+import vk_api
+import httpx
+from typing import List, Dict, Optional
+from config.settings import settings
+
+
+class VKAPIService:
+    def __init__(self):
+        self.access_token = settings.VK_ACCESS_TOKEN
+        self.group_token = settings.VK_GROUP_TOKEN
+        self.vk_session = vk_api.VkApi(token=self.access_token)
+        self.vk = self.vk_session.get_api()
+    
+    async def get_group_info(self, group_id: int) -> Optional[Dict]:
+        """Получение информации о группе"""
+        try:
+            # Убираем минус для групп
+            group_id_positive = abs(group_id)
+            
+            response = self.vk.groups.getById(
+                group_id=group_id_positive,
+                fields="description,photo_100"
+            )
+            
+            if response:
+                group = response[0]
+                return {
+                    "id": group["id"],
+                    "name": group["name"],
+                    "screen_name": group.get("screen_name"),
+                    "photo_url": group.get("photo_100"),
+                    "description": group.get("description")
+                }
+            
+        except Exception as e:
+            print(f"Ошибка получения информации о группе {group_id}: {e}")
+        
+        return None
+    
+    async def get_group_posts(self, group_id: int, count: int = 100) -> List[Dict]:
+        """Получение постов группы"""
+        try:
+            # Убираем минус для групп
+            group_id_positive = abs(group_id)
+            
+            response = self.vk.wall.get(
+                owner_id=-group_id_positive,
+                count=count,
+                extended=1
+            )
+            
+            posts = response.get("items", [])
+            
+            # Фильтруем репосты если нужно
+            filtered_posts = []
+            for post in posts:
+                if not self._is_repost(post):
+                    filtered_posts.append(post)
+            
+            return filtered_posts
+            
+        except Exception as e:
+            print(f"Ошибка получения постов группы {group_id}: {e}")
+            return []
+    
+    async def get_post_info(self, post_id: str) -> Optional[Dict]:
+        """Получение информации о конкретном посте"""
+        try:
+            # Парсим post_id (формат: group_id_post_id)
+            parts = post_id.split("_")
+            if len(parts) != 2:
+                return None
+            
+            owner_id = int(parts[0])
+            post_id_num = int(parts[1])
+            
+            response = self.vk.wall.getById(
+                posts=f"{owner_id}_{post_id_num}"
+            )
+            
+            if response:
+                return response[0]
+            
+        except Exception as e:
+            print(f"Ошибка получения информации о посте {post_id}: {e}")
+        
+        return None
+    
+    def _is_repost(self, post: Dict) -> bool:
+        """Проверка, является ли пост репостом"""
+        # Проверка copy_history
+        if 'copy_history' in post and post['copy_history']:
+            return True
+        
+        # Проверка текста на ключевые слова
+        text = post.get('text', '').lower()
+        repost_keywords = ['репост', 'repost', 'поделился', 'поделилась', 'поделились']
+        
+        for keyword in repost_keywords:
+            if keyword in text:
+                return True
+        
+        # Проверка attachments на wall
+        attachments = post.get('attachments', [])
+        for attachment in attachments:
+            if attachment.get('type') == 'wall':
+                return True
+        
+        return False
+    
+    async def send_message(self, user_id: int, message: str, keyboard: Optional[Dict] = None) -> bool:
+        """Отправка сообщения пользователю"""
+        try:
+            params = {
+                "user_id": user_id,
+                "message": message,
+                "random_id": 0
+            }
+            
+            if keyboard:
+                params["keyboard"] = keyboard
+            
+            self.vk.messages.send(**params)
+            return True
+            
+        except Exception as e:
+            print(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
+            return False
+    
+    async def get_user_info(self, user_id: int) -> Optional[Dict]:
+        """Получение информации о пользователе"""
+        try:
+            response = self.vk.users.get(
+                user_ids=user_id,
+                fields="screen_name,photo_100"
+            )
+            
+            if response:
+                user = response[0]
+                return {
+                    "id": user["id"],
+                    "first_name": user["first_name"],
+                    "last_name": user["last_name"],
+                    "screen_name": user.get("screen_name"),
+                    "photo_url": user.get("photo_100")
+                }
+            
+        except Exception as e:
+            print(f"Ошибка получения информации о пользователе {user_id}: {e}")
+        
+        return None 
