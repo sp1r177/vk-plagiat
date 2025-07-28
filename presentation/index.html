@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Плагиат-Детектор - VK Mini App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/scrollreveal@4.0.9/dist/scrollreveal.min.js"></script>
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                🔍 Плагиат-Детектор
+            </div>
+            <div class="nav-links">
+                <a href="#problem">Проблема</a>
+                <a href="#solution">Решение</a>
+                <a href="#audience">Аудитория</a>
+                <a href="#features">Функции</a>
+                <a href="#monetization">Монетизация</a>
+                <a href="#roadmap">План</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Главный экран -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    🔍 Плагиат-Детектор
+                </h1>
+                <p class="hero-subtitle">
+                    Автоматический поиск плагиата контента в ВКонтакте
+                </p>
+                <div class="hero-stats">
+                    <div class="stat">
+                        <span class="stat-number">2x</span>
+                        <span class="stat-label">в день</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">10</span>
+                        <span class="stat-label">уведомлений</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-number">70%</span>
+                        <span class="stat-label">точность</span>
+                    </div>
+                </div>
+                <div class="hero-buttons">
+                    <a href="#demo" class="btn btn-primary">Демо</a>
+                    <a href="#github" class="btn btn-secondary">GitHub</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="app-mockup">
+                    <div class="mockup-screen">
+                        <div class="mockup-header">Плагиат-Детектор</div>
+                        <div class="mockup-content">
+                            <div class="mockup-item">
+                                <span class="mockup-icon">📊</span>
+                                <span>Найдено плагиата: 3</span>
+                            </div>
+                            <div class="mockup-item">
+                                <span class="mockup-icon">🔔</span>
+                                <span>Уведомления: 2/10</span>
+                            </div>
+                            <div class="mockup-item">
+                                <span class="mockup-icon">📈</span>
+                                <span>Схожесть: 85%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 1. Направление проекта -->
+    <section id="problem" class="section">
+        <div class="container">
+            <h2 class="section-title">1. Направление проекта</h2>
+            <div class="problem-grid">
+                <div class="problem-card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Тип проекта</h3>
+                    <p><strong>Инструмент для авторов контента</strong></p>
+                    <p>Сервис для автоматического мониторинга и обнаружения плагиата в группах ВКонтакте</p>
+                </div>
+                <div class="problem-card">
+                    <div class="card-icon">❌</div>
+                    <h3>Проблема</h3>
+                    <p><strong>Массовый плагиат контента</strong></p>
+                    <p>Авторы теряют уникальность, время на создание контента, а плагиаторы получают незаслуженную популярность</p>
+                </div>
+                <div class="problem-card">
+                    <div class="card-icon">💡</div>
+                    <h3>Решение</h3>
+                    <p><strong>Автоматический детектор</strong></p>
+                    <p>Мониторинг групп 2 раза в день с уведомлениями о найденном плагиате и ссылками на оригиналы</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. Конкуренты -->
+    <section class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">Конкуренты и преимущества</h2>
+            <div class="competitors-grid">
+                <div class="competitor-card">
+                    <h3>Существующие решения</h3>
+                    <ul>
+                        <li>Ручной поиск плагиата</li>
+                        <li>Дорогие корпоративные решения</li>
+                        <li>Отсутствие интеграции с VK</li>
+                        <li>Нет автоматических уведомлений</li>
+                    </ul>
+                </div>
+                <div class="competitor-card highlight">
+                    <h3>Наши преимущества</h3>
+                    <ul>
+                        <li>✅ Автоматический мониторинг</li>
+                        <li>✅ Интеграция с VK API</li>
+                        <li>✅ Умные уведомления</li>
+                        <li>✅ Доступная цена</li>
+                        <li>✅ Простота использования</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. Целевая аудитория -->
+    <section id="audience" class="section">
+        <div class="container">
+            <h2 class="section-title">2. Целевая аудитория</h2>
+            <div class="audience-grid">
+                <div class="audience-card">
+                    <div class="audience-icon">👨‍💼</div>
+                    <h3>Владельцы групп</h3>
+                    <p><strong>Объем:</strong> 500,000+ активных групп</p>
+                    <p><strong>УТП:</strong> Защита уникального контента, экономия времени на поиск плагиата</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">📝</div>
+                    <h3>Контент-мейкеры</h3>
+                    <p><strong>Объем:</strong> 200,000+ авторов</p>
+                    <p><strong>УТП:</strong> Автоматическое обнаружение копирования их работ</p>
+                </div>
+                <div class="audience-card">
+                    <div class="audience-icon">🏢</div>
+                    <h3>Маркетинговые агентства</h3>
+                    <p><strong>Объем:</strong> 50,000+ агентств</p>
+                    <p><strong>УТП:</strong> Мониторинг клиентских аккаунтов, защита репутации</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Путь пользователя -->
+    <section id="features" class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">3. Путь пользователя</h2>
+            <div class="user-journey">
+                <div class="journey-step">
+                    <div class="step-number">1</div>
+                    <h3>Регистрация через VK</h3>
+                    <p>Быстрая авторизация через VK OAuth</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-number">2</div>
+                    <h3>Добавление групп</h3>
+                    <p>Выбор групп для мониторинга (до 10 групп)</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-number">3</div>
+                    <h3>Настройка параметров</h3>
+                    <p>Выбор типов проверки: текст, изображения, исключение репостов</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-number">4</div>
+                    <h3>Автоматический мониторинг</h3>
+                    <p>Проверка 2 раза в день (09:00 и 18:00)</p>
+                </div>
+                <div class="journey-step">
+                    <div class="step-number">5</div>
+                    <h3>Уведомления</h3>
+                    <p>Получение уведомлений с ссылками на плагиат</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Основные функции -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Основные функции</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🤖</div>
+                    <h3>Автоматический мониторинг</h3>
+                    <p>Проверка групп 2 раза в день без участия пользователя</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Умная детекция</h3>
+                    <p>TF-IDF для текста + imagehash для изображений</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔔</div>
+                    <h3>Уведомления</h3>
+                    <p>Прямые сообщения с ссылками и процентом схожести</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Статистика</h3>
+                    <p>Детальная аналитика найденного плагиата</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚙️</div>
+                    <h3>Настройки</h3>
+                    <p>Гибкая настройка параметров проверки</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">💳</div>
+                    <h3>Тарифы</h3>
+                    <p>4 уровня подписки от бесплатного до премиум</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Привлечение и удержание -->
+    <section class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">4. Привлечение и удержание пользователей</h2>
+            <div class="retention-grid">
+                <div class="retention-card">
+                    <h3>Точки входа</h3>
+                    <ul>
+                        <li>VK Mini Apps каталог</li>
+                        <li>Партнерство с популярными группами</li>
+                        <li>Рекомендации от существующих пользователей</li>
+                        <li>Контент-маркетинг в тематических группах</li>
+                    </ul>
+                </div>
+                <div class="retention-card">
+                    <h3>Органический рост</h3>
+                    <ul>
+                        <li>Реферальная программа</li>
+                        <li>Поделиться результатами в соцсетях</li>
+                        <li>Публичные отчеты о найденном плагиате</li>
+                        <li>Интеграция с VK Stories</li>
+                    </ul>
+                </div>
+                <div class="retention-card">
+                    <h3>Мотивация возврата</h3>
+                    <ul>
+                        <li>Ежедневные уведомления о новых случаях</li>
+                        <li>Еженедельная статистика</li>
+                        <li>Геймификация (достижения, рейтинги)</li>
+                        <li>Эксклюзивные функции для премиум</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Монетизация -->
+    <section id="monetization" class="section">
+        <div class="container">
+            <h2 class="section-title">5. Модель монетизации</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Бесплатно</h3>
+                        <div class="price">0₽</div>
+                    </div>
+                    <ul>
+                        <li>1 группа</li>
+                        <li>1 день</li>
+                        <li>Базовые уведомления</li>
+                    </ul>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Базовый</h3>
+                        <div class="price">299₽/мес</div>
+                    </div>
+                    <ul>
+                        <li>1 группа</li>
+                        <li>30 дней</li>
+                        <li>Полные уведомления</li>
+                    </ul>
+                </div>
+                <div class="pricing-card highlight">
+                    <div class="pricing-header">
+                        <h3>Стандарт</h3>
+                        <div class="price">799₽/мес</div>
+                    </div>
+                    <ul>
+                        <li>5 групп</li>
+                        <li>30 дней</li>
+                        <li>Приоритетная поддержка</li>
+                    </ul>
+                </div>
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Премиум</h3>
+                        <div class="price">1199₽/мес</div>
+                    </div>
+                    <ul>
+                        <li>10 групп</li>
+                        <li>30 дней</li>
+                        <li>API доступ</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. План реализации -->
+    <section id="roadmap" class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">6. План реализации</h2>
+            <div class="roadmap">
+                <div class="roadmap-item">
+                    <div class="roadmap-date">Неделя 1-2</div>
+                    <h3>MVP разработка</h3>
+                    <ul>
+                        <li>Базовая функциональность</li>
+                        <li>Интеграция с VK API</li>
+                        <li>Система уведомлений</li>
+                    </ul>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-date">Неделя 3</div>
+                    <h3>Тестирование</h3>
+                    <ul>
+                        <li>Бета-тестирование</li>
+                        <li>Исправление багов</li>
+                        <li>Оптимизация производительности</li>
+                    </ul>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-date">Неделя 4</div>
+                    <h3>Запуск</h3>
+                    <ul>
+                        <li>Публикация в VK Mini Apps</li>
+                        <li>Продвижение в тематических группах</li>
+                        <li>Сбор обратной связи</li>
+                    </ul>
+                </div>
+                <div class="roadmap-item">
+                    <div class="roadmap-date">Месяц 2-3</div>
+                    <h3>Развитие</h3>
+                    <ul>
+                        <li>Добавление новых функций</li>
+                        <li>Расширение аудитории</li>
+                        <li>Оптимизация монетизации</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Демо -->
+    <section id="demo" class="section">
+        <div class="container">
+            <h2 class="section-title">Демонстрация</h2>
+            <div class="demo-container">
+                <div class="demo-video">
+                    <div class="video-placeholder">
+                        <div class="play-button">▶️</div>
+                        <p>Демо-видео приложения</p>
+                    </div>
+                </div>
+                <div class="demo-links">
+                    <a href="https://github.com/sp1r177/vk-plagiat" class="btn btn-primary">GitHub репозиторий</a>
+                    <a href="#" class="btn btn-secondary">Live демо</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Контакты -->
+    <section class="section bg-dark">
+        <div class="container">
+            <div class="contact-content">
+                <h2>Готовы к запуску!</h2>
+                <p>Проект полностью готов для участия в VK Dev Contest</p>
+                <div class="contact-links">
+                    <a href="https://github.com/sp1r177/vk-plagiat" class="btn btn-primary">GitHub</a>
+                    <a href="mailto:contact@example.com" class="btn btn-secondary">Связаться</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html> 
