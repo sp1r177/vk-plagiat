@@ -2,6 +2,7 @@
   "name": "plagiarism-detector-vk-app",
   "version": "1.0.0",
   "description": "VK Mini App для детекции плагиата",
+  "homepage": "https://sp1r1.github.io/vk-plagiat",
   "main": "index.js",
   "scripts": {
     "start": "react-scripts start",
