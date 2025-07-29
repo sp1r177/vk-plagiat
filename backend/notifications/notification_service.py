@@ -31,8 +31,11 @@ class NotificationService:
             # Формируем сообщение
             message = self._format_plagiarism_message(plagiarism)
             
-            # Отправляем сообщение
-            success = await self.vk_api.send_message(user.vk_id, message)
+            # Создаем клавиатуру с кнопками жалоб
+            keyboard = self._create_complaint_keyboard(plagiarism)
+            
+            # Отправляем сообщение с клавиатурой
+            success = await self.vk_api.send_message(user.vk_id, message, keyboard)
             
             if success:
                 # Обновляем статистику
@@ -89,6 +92,53 @@ https://vk.com/wall{plagiarism.plagiarized_post_id}
 💡 Для получения подробной статистики откройте приложение."""
         
         return message
+    
+    def _create_complaint_keyboard(self, plagiarism: Plagiarism) -> dict:
+        """Создание клавиатуры с кнопками жалоб"""
+        keyboard = {
+            "one_time": False,
+            "buttons": [
+                [
+                    {
+                        "action": {
+                            "type": "open_link",
+                            "link": f"https://vk.com/wall{plagiarism.plagiarized_post_id}",
+                            "label": "👁️ Посмотреть пост"
+                        },
+                        "color": "primary"
+                    }
+                ],
+                [
+                    {
+                        "action": {
+                            "type": "open_link",
+                            "link": f"https://vk.com/support?act=report&type=post&owner_id={plagiarism.plagiarized_group_id}&item_id={plagiarism.plagiarized_post_id.split('_')[-1]}",
+                            "label": "🚨 Пожаловаться"
+                        },
+                        "color": "negative"
+                    }
+                ],
+                [
+                    {
+                        "action": {
+                            "type": "text",
+                            "label": "✅ Подтвердить плагиат",
+                            "payload": f"confirm_plagiarism_{plagiarism.id}"
+                        },
+                        "color": "positive"
+                    },
+                    {
+                        "action": {
+                            "type": "text",
+                            "label": "❌ Ложное срабатывание",
+                            "payload": f"false_positive_{plagiarism.id}"
+                        },
+                        "color": "secondary"
+                    }
+                ]
+            ]
+        }
+        return keyboard
     
     async def send_daily_summary(self, user_id: int, db: Session):
         """Отправка ежедневного отчета"""

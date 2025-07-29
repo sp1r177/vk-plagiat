@@ -148,4 +148,35 @@ class VKAPIService:
         except Exception as e:
             print(f"Ошибка получения информации о пользователе {user_id}: {e}")
         
-        return None 
+        return None
+    
+    def parse_button_payload(self, payload: str) -> Optional[Dict]:
+        """Парсинг payload кнопки для определения действия"""
+        try:
+            if payload.startswith("confirm_plagiarism_"):
+                plagiarism_id = int(payload.split("_")[-1])
+                return {
+                    "action": "confirm_plagiarism",
+                    "plagiarism_id": plagiarism_id
+                }
+            elif payload.startswith("false_positive_"):
+                plagiarism_id = int(payload.split("_")[-1])
+                return {
+                    "action": "false_positive",
+                    "plagiarism_id": plagiarism_id
+                }
+            else:
+                return None
+        except Exception as e:
+            print(f"Ошибка парсинга payload кнопки: {e}")
+            return None
+    
+    def create_complaint_url(self, group_id: int, post_id: str) -> str:
+        """Создание URL для жалобы на пост"""
+        try:
+            # Извлекаем ID поста из полного ID
+            post_id_num = post_id.split("_")[-1]
+            return f"https://vk.com/support?act=report&type=post&owner_id={group_id}&item_id={post_id_num}"
+        except Exception as e:
+            print(f"Ошибка создания URL жалобы: {e}")
+            return "" 

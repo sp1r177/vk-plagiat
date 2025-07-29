@@ -5,6 +5,7 @@ from models.user import User
 from models.plagiarism import Plagiarism
 from services.auth_service import get_current_user
 from notifications.notification_service import NotificationService
+from services.vk_api_service import VKAPIService
 from typing import List
 from datetime import datetime, timedelta
 from models.group import Group
@@ -12,6 +13,7 @@ import settings
 
 router = APIRouter()
 notification_service = NotificationService()
+vk_api = VKAPIService()
 
 
 @router.get("/history")
@@ -144,6 +146,68 @@ async def get_notification_settings(
     
     return {
         "notifications_enabled": current_user.notifications_enabled,
-        "notifications_sent_today": current_user.notifications_sent_today,
-        "max_notifications_per_day": settings.MAX_NOTIFICATIONS_PER_DAY
-    } 
+        "max_notifications_per_day": settings.MAX_NOTIFICATIONS_PER_DAY,
+        "notifications_sent_today": current_user.notifications_sent_today
+    }
+
+
+@router.post("/button-action")
+async def handle_button_action(
+    action: str,
+    plagiarism_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Обработка нажатий кнопок в уведомлениях"""
+    
+    try:
+        # Получаем случай плагиата
+        plagiarism = db.query(Plagiarism).join(Group).filter(
+            Plagiarism.id == plagiarism_id,
+            Group.user_id == current_user.id
+        ).first()
+        
+        if not plagiarism:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Случай плагиата не найден"
+            )
+        
+        if action == "confirm_plagiarism":
+            # Подтверждаем плагиат
+            plagiarism.is_confirmed = True
+            plagiarism.is_false_positive = False
+            
+            # Отправляем подтверждение пользователю
+            message = f"✅ Плагиат подтвержден!\n\n📝 Пост: https://vk.com/wall{plagiarism.plagiarized_post_id}\n\nСпасибо за обратную связь!"
+            await vk_api.send_message(current_user.vk_id, message)
+            
+        elif action == "false_positive":
+            # Отмечаем как ложное срабатывание
+            plagiarism.is_false_positive = True
+            plagiarism.is_confirmed = False
+            
+            # Отправляем подтверждение пользователю
+            message = f"❌ Плагиат отмечен как ложное срабатывание\n\n📝 Пост: https://vk.com/wall{plagiarism.plagiarized_post_id}\n\nСпасибо за обратную связь! Мы улучшим алгоритм."
+            await vk_api.send_message(current_user.vk_id, message)
+        
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Неизвестное действие"
+            )
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "action": action,
+            "plagiarism_id": plagiarism_id
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка обработки действия: {str(e)}"
+        ) 
