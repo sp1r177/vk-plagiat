@@ -2,6 +2,10 @@ import vk_api
 import httpx
 from typing import List, Dict, Optional
 from config.settings import settings
+import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class VKAPIService:
@@ -10,58 +14,91 @@ class VKAPIService:
         self.group_token = settings.VK_GROUP_TOKEN
         self.vk_session = vk_api.VkApi(token=self.access_token)
         self.vk = self.vk_session.get_api()
+        
+        # Настройки для обработки ошибок
+        self.max_retries = 3
+        self.retry_delay = 1  # секунды
+        
+    def _handle_vk_error(self, error, operation: str):
+        """Обработка ошибок VK API"""
+        error_code = getattr(error, 'code', None)
+        
+        if error_code == 6:  # Too many requests per second
+            logger.warning(f"VK API: Слишком много запросов для {operation}")
+            time.sleep(self.retry_delay)
+            return True  # Повторить
+        elif error_code == 5:  # Invalid token
+            logger.error(f"VK API: Неверный токен для {operation}")
+            return False
+        elif error_code == 15:  # Access denied
+            logger.warning(f"VK API: Доступ запрещен для {operation}")
+            return False
+        else:
+            logger.error(f"VK API ошибка {error_code} для {operation}: {error}")
+            return False
     
     async def get_group_info(self, group_id: int) -> Optional[Dict]:
-        """Получение информации о группе"""
-        try:
-            # Убираем минус для групп
-            group_id_positive = abs(group_id)
-            
-            response = self.vk.groups.getById(
-                group_id=group_id_positive,
-                fields="description,photo_100"
-            )
-            
-            if response:
-                group = response[0]
-                return {
-                    "id": group["id"],
-                    "name": group["name"],
-                    "screen_name": group.get("screen_name"),
-                    "photo_url": group.get("photo_100"),
-                    "description": group.get("description")
-                }
-            
-        except Exception as e:
-            print(f"Ошибка получения информации о группе {group_id}: {e}")
+        """Получение информации о группе с обработкой ошибок"""
+        for attempt in range(self.max_retries):
+            try:
+                # Убираем минус для групп
+                group_id_positive = abs(group_id)
+                
+                response = self.vk.groups.getById(
+                    group_id=group_id_positive,
+                    fields="description,photo_100"
+                )
+                
+                if response:
+                    group = response[0]
+                    return {
+                        "id": group["id"],
+                        "name": group["name"],
+                        "screen_name": group.get("screen_name"),
+                        "photo_url": group.get("photo_100"),
+                        "description": group.get("description")
+                    }
+                
+            except Exception as e:
+                if hasattr(e, 'code') and self._handle_vk_error(e, f"get_group_info({group_id})"):
+                    continue  # Повторить
+                else:
+                    logger.error(f"Ошибка получения информации о группе {group_id}: {e}")
+                    break
         
         return None
     
     async def get_group_posts(self, group_id: int, count: int = 100) -> List[Dict]:
-        """Получение постов группы"""
-        try:
-            # Убираем минус для групп
-            group_id_positive = abs(group_id)
-            
-            response = self.vk.wall.get(
-                owner_id=-group_id_positive,
-                count=count,
-                extended=1
-            )
-            
-            posts = response.get("items", [])
-            
-            # Фильтруем репосты если нужно
-            filtered_posts = []
-            for post in posts:
-                if not self._is_repost(post):
-                    filtered_posts.append(post)
-            
-            return filtered_posts
-            
-        except Exception as e:
-            print(f"Ошибка получения постов группы {group_id}: {e}")
-            return []
+        """Получение постов группы с обработкой ошибок"""
+        for attempt in range(self.max_retries):
+            try:
+                # Убираем минус для групп
+                group_id_positive = abs(group_id)
+                
+                response = self.vk.wall.get(
+                    owner_id=-group_id_positive,
+                    count=min(count, 100),  # Ограничиваем количество
+                    extended=1
+                )
+                
+                posts = response.get("items", [])
+                
+                # Фильтруем репосты если нужно
+                filtered_posts = []
+                for post in posts:
+                    if not self._is_repost(post):
+                        filtered_posts.append(post)
+                
+                return filtered_posts
+                
+            except Exception as e:
+                if hasattr(e, 'code') and self._handle_vk_error(e, f"get_group_posts({group_id})"):
+                    continue  # Повторить
+                else:
+                    logger.error(f"Ошибка получения постов группы {group_id}: {e}")
+                    break
+        
+        return []
     
     async def get_post_info(self, post_id: str) -> Optional[Dict]:
         """Получение информации о конкретном посте"""
@@ -109,23 +146,30 @@ class VKAPIService:
         return False
     
     async def send_message(self, user_id: int, message: str, keyboard: Optional[Dict] = None) -> bool:
-        """Отправка сообщения пользователю"""
-        try:
-            params = {
-                "user_id": user_id,
-                "message": message,
-                "random_id": 0
-            }
-            
-            if keyboard:
-                params["keyboard"] = keyboard
-            
-            self.vk.messages.send(**params)
-            return True
-            
-        except Exception as e:
-            print(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
-            return False
+        """Отправка сообщения пользователю с обработкой ошибок"""
+        for attempt in range(self.max_retries):
+            try:
+                params = {
+                    "user_id": user_id,
+                    "message": message,
+                    "random_id": int(time.time() * 1000)  # Уникальный ID
+                }
+                
+                if keyboard:
+                    params["keyboard"] = keyboard
+                
+                self.vk.messages.send(**params)
+                logger.info(f"Сообщение отправлено пользователю {user_id}")
+                return True
+                
+            except Exception as e:
+                if hasattr(e, 'code') and self._handle_vk_error(e, f"send_message({user_id})"):
+                    continue  # Повторить
+                else:
+                    logger.error(f"Ошибка отправки сообщения пользователю {user_id}: {e}")
+                    break
+        
+        return False
     
     async def get_user_info(self, user_id: int) -> Optional[Dict]:
         """Получение информации о пользователе"""

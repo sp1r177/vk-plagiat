@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from database.database import engine, Base
 from routers import auth, groups, monitoring, billing, notifications
+from monitoring.scheduler import MonitoringScheduler
 from config.settings import settings
 
 
@@ -13,7 +14,15 @@ from config.settings import settings
 async def lifespan(app: FastAPI):
     # Создание таблиц при запуске
     Base.metadata.create_all(bind=engine)
+    
+    # Инициализация планировщика мониторинга
+    scheduler = MonitoringScheduler()
+    scheduler.start()
+    
     yield
+    
+    # Остановка планировщика при завершении
+    scheduler.stop()
 
 
 app = FastAPI(

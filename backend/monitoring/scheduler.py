@@ -155,39 +155,52 @@ class MonitoringScheduler:
         return images
     
     async def find_similar_posts(self, text: str, images: List[str], exclude_group_id: int) -> List[Dict]:
-        """Поиск похожих постов"""
-        # Здесь должна быть логика поиска похожих постов
-        # Для MVP используем простой поиск по ключевым словам
-        
+        """Поиск похожих постов в реальных группах"""
         similar_posts = []
         
-        # Получаем посты из популярных групп для сравнения
-        popular_groups = [-1, -2, -3]  # ID популярных групп
-        
-        for group_id in popular_groups:
-            if group_id == exclude_group_id:
-                continue
+        # Получаем список групп для мониторинга из базы данных
+        db = SessionLocal()
+        try:
+            monitored_groups = db.query(Group).filter(
+                Group.is_active == True,
+                Group.vk_group_id != exclude_group_id
+            ).limit(10).all()  # Ограничиваем количество групп для производительности
             
-            try:
-                posts = await self.vk_api.get_group_posts(group_id, count=20)
-                
-                for post in posts:
-                    post_text = post.get('text', '')
-                    post_images = self._extract_images(post)
+            for group in monitored_groups:
+                try:
+                    # Получаем посты группы
+                    posts = await self.vk_api.get_group_posts(group.vk_group_id, count=10)
                     
-                    # Простая проверка на схожесть
-                    if text and post_text:
-                        similarity = self.detector.detect_text_plagiarism(text, post_text)
-                        if similarity > 0.3:  # Низкий порог для предварительной фильтрации
-                            similar_posts.append({
-                                'id': post['id'],
-                                'text': post_text,
-                                'images': post_images,
-                                'group_id': group_id
-                            })
-            
-            except Exception as e:
-                logger.error(f"Ошибка поиска в группе {group_id}: {e}")
+                    for post in posts:
+                        post_text = post.get('text', '')
+                        post_images = self._extract_images(post)
+                        
+                        # Проверяем схожесть текста
+                        if text and post_text and len(text) > 20 and len(post_text) > 20:
+                            # Используем новую логику детекции
+                            analysis_result = self.detector.detect_plagiarism(
+                                {'text': text, 'attachments': [{'type': 'photo', 'photo': {'sizes': [{'url': img}]}} for img in images]},
+                                {'text': post_text, 'attachments': [{'type': 'photo', 'photo': {'sizes': [{'url': img}]}} for img in post_images]}
+                            )
+                            
+                            # Добавляем пост если есть схожесть
+                            if analysis_result['text_similarity'] > 0.3 or analysis_result['image_similarity'] > 0.3:
+                                similar_posts.append({
+                                    'id': post['id'],
+                                    'owner_id': post['owner_id'],
+                                    'text': post_text,
+                                    'images': post_images,
+                                    'attachments': post.get('attachments', [])
+                                })
+                
+                except Exception as e:
+                    logger.error(f"Ошибка поиска в группе {group.vk_group_id}: {e}")
+                    continue
+                    
+        except Exception as e:
+            logger.error(f"Ошибка получения групп для поиска: {e}")
+        finally:
+            db.close()
         
         return similar_posts
     
