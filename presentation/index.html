@@ -554,40 +554,7 @@
             left: 0;
         }
 
-        /* Демо */
-        .demo-container {
-            text-align: center;
-        }
 
-        .demo-video {
-            margin-bottom: 2rem;
-        }
-
-        .video-placeholder {
-            background: #f1f5f9;
-            border: 2px dashed #cbd5e1;
-            border-radius: 16px;
-            padding: 4rem;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .video-placeholder:hover {
-            background: #e2e8f0;
-            border-color: #94a3b8;
-        }
-
-        .play-button {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .demo-links {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-        }
 
         /* Контакты */
         .contact-content {
@@ -642,10 +609,7 @@
                 grid-template-columns: 1fr;
             }
             
-            .demo-links {
-                flex-direction: column;
-                align-items: center;
-            }
+
             
             .contact-links {
                 flex-direction: column;
@@ -698,7 +662,7 @@
             </div>
             <div class="nav-links">
                 <a href="#problem">Проблема</a>
-                <a href="#solution">Решение</a>
+                <a href="#competitors">Конкуренты</a>
                 <a href="#audience">Аудитория</a>
                 <a href="#features">Функции</a>
                 <a href="#monetization">Монетизация</a>
@@ -732,7 +696,7 @@
                     </div>
                 </div>
                 <div class="hero-buttons">
-                    <a href="#demo" class="btn btn-primary">Демо</a>
+                    <a href="#problem" class="btn btn-primary">Перейти к презентации</a>
                 </div>
             </div>
             <div class="hero-image">
@@ -786,8 +750,35 @@
         </div>
     </section>
 
+    <!-- Проблема потерь охватов -->
+    <section class="section bg-dark">
+        <div class="container">
+            <h2 class="section-title" style="color: white;">Почему это важно?</h2>
+            <div class="problem-grid">
+                <div class="problem-card" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    <div class="card-icon">📉</div>
+                    <h3 style="color: white;">Потеря охватов</h3>
+                    <p style="color: rgba(255,255,255,0.8);"><strong>Авторы теряют до 70% охватов</strong></p>
+                    <p style="color: rgba(255,255,255,0.8);">Когда контент копируется, оригинальные посты получают меньше просмотров и взаимодействий</p>
+                </div>
+                <div class="problem-card" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    <div class="card-icon">💰</div>
+                    <h3 style="color: white;">Финансовые потери</h3>
+                    <p style="color: rgba(255,255,255,0.8);"><strong>Снижение доходов от рекламы</strong></p>
+                    <p style="color: rgba(255,255,255,0.8);">Меньше охватов = меньше кликов по рекламе и партнерским ссылкам</p>
+                </div>
+                <div class="problem-card" style="background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    <div class="card-icon">🎯</div>
+                    <h3 style="color: white;">Потеря аудитории</h3>
+                    <p style="color: rgba(255,255,255,0.8);"><strong>Подписчики уходят к плагиаторам</strong></p>
+                    <p style="color: rgba(255,255,255,0.8);">Люди могут подписаться на аккаунт, который копирует ваш контент</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- 2. Конкуренты -->
-    <section class="section bg-light">
+    <section id="competitors" class="section bg-light">
         <div class="container">
             <h2 class="section-title">Конкуренты и преимущества</h2>
             <div class="competitors-grid">
@@ -962,7 +953,7 @@
                     </div>
                     <ul>
                         <li>1 группа</li>
-                        <li>1 день</li>
+                        <li>2 недели</li>
                         <li>Базовые уведомления</li>
                     </ul>
                 </div>
@@ -1048,23 +1039,7 @@
         </div>
     </section>
 
-    <!-- Демо -->
-    <section id="demo" class="section">
-        <div class="container">
-            <h2 class="section-title">Демонстрация</h2>
-            <div class="demo-container">
-                <div class="demo-video">
-                    <div class="video-placeholder">
-                        <div class="play-button">▶️</div>
-                        <p>Демо-видео приложения</p>
-                    </div>
-                </div>
-                <div class="demo-links">
-                    <a href="#" class="btn btn-primary">Live демо</a>
-                </div>
-            </div>
-        </div>
-    </section>
+
 
     <!-- Контакты -->
     <section class="section bg-dark">
@@ -1073,7 +1048,7 @@
                 <h2>Готовы к запуску!</h2>
                 <p>Проект полностью готов для участия в VK Dev Contest</p>
                 <div class="contact-links">
-                    <a href="mailto:contact@example.com" class="btn btn-secondary">Связаться</a>
+                    <a href="https://vk.com/alexburlakin" class="btn btn-secondary">Связаться</a>
                 </div>
             </div>
         </div>
@@ -1214,11 +1189,7 @@
             });
         });
 
-        // Демо видео placeholder
-        document.querySelector('.video-placeholder').addEventListener('click', function() {
-            // Здесь можно добавить открытие модального окна с видео
-            alert('Демо-видео будет добавлено позже');
-        });
+
 
         // Счетчик прокрутки для навигации
         window.addEventListener('scroll', () => {
