@@ -23,7 +23,13 @@ class Settings(BaseSettings):
     # Мониторинг
     MONITORING_INTERVAL_HOURS: int = 12  # 2 раза в день
     MAX_NOTIFICATIONS_PER_DAY: int = 10
-    SIMILARITY_THRESHOLD: float = 0.7  # Порог схожести для плагиата
+    SIMILARITY_THRESHOLD: float = 0.8  # Повышенный порог схожести для плагиата (было 0.7)
+    
+    # Дополнительные настройки детекции плагиата
+    TEXT_SIMILARITY_THRESHOLD: float = 0.85  # Порог для текста
+    IMAGE_SIMILARITY_THRESHOLD: float = 0.90  # Порог для изображений
+    MIN_TEXT_LENGTH: int = 50  # Минимальная длина текста для анализа
+    CONFIDENCE_THRESHOLD: float = 0.7  # Порог уверенности для уведомлений
     
     # Платежи
     VK_PAY_MERCHANT_ID: str = os.getenv("VK_PAY_MERCHANT_ID", "")

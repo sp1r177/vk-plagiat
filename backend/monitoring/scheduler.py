@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 import asyncio
 from typing import List, Dict
 import logging
+import settings
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -103,7 +104,12 @@ class MonitoringScheduler:
         logger.info(f"Группа {group.name}: проверено {len(posts)} постов, найдено плагиата: {plagiarism_found}")
     
     async def check_post_for_plagiarism(self, post: Dict, group: Group, db: Session) -> bool:
-        """Проверка поста на плагиат"""
+        """Проверка поста на плагиат с использованием улучшенной логики"""
+        
+        # Проверяем, не является ли пост репостом
+        if self.detector.is_repost(post):
+            return False
+        
         post_text = post.get('text', '')
         post_images = self._extract_images(post)
         
@@ -113,37 +119,25 @@ class MonitoringScheduler:
         # Ищем похожие посты в других группах
         similar_posts = await self.find_similar_posts(post_text, post_images, group.vk_group_id)
         
-        for similar_post in similar_posts:
-            # Проверяем схожесть
-            text_similarity = 0.0
-            image_similarity = 0.0
-            
-            if post_text and similar_post.get('text'):
-                text_similarity = self.detector.detect_text_plagiarism(
-                    post_text, similar_post.get('text', '')
-                )
-            
-            if post_images and similar_post.get('images'):
-                # Сравниваем изображения
-                for img1 in post_images:
-                    for img2 in similar_post.get('images', []):
-                        similarity = self.detector.detect_image_plagiarism(img1, img2)
-                        image_similarity = max(image_similarity, similarity)
-            
-            # Вычисляем общую схожесть
-            overall_similarity = self.detector.calculate_overall_similarity(
-                text_similarity, image_similarity
-            )
-            
-            # Если схожесть превышает порог, создаем запись о плагиате
-            if self.detector.is_plagiarism(overall_similarity):
-                await self.create_plagiarism_record(
-                    post, similar_post, group, overall_similarity,
-                    text_similarity, image_similarity, db
-                )
-                return True
+        plagiarism_found = False
         
-        return False
+        for similar_post in similar_posts:
+            # Используем новую логику детекции
+            analysis_result = self.detector.detect_plagiarism(similar_post, post)
+            
+            # Проверяем, является ли это плагиатом
+            if analysis_result['is_plagiarism'] and analysis_result['can_report_to_vk']:
+                # Создаем запись о плагиате только если уверенность высокая
+                if analysis_result['confidence'] >= settings.CONFIDENCE_THRESHOLD:
+                    await self.create_plagiarism_record_improved(
+                        similar_post, post, group, analysis_result, db
+                    )
+                    plagiarism_found = True
+                    logger.info(f"Найден плагиат: {analysis_result['recommendation']}")
+                else:
+                    logger.info(f"Низкая уверенность в плагиате: {analysis_result['confidence']}")
+        
+        return plagiarism_found
     
     def _extract_images(self, post: Dict) -> List[str]:
         """Извлечение URL изображений из поста"""
@@ -204,15 +198,16 @@ class MonitoringScheduler:
         """Создание записи о найденном плагиате"""
         from models.plagiarism import Plagiarism
         
+        # Создаем запись о плагиате
         plagiarism = Plagiarism(
             group_id=group.id,
             original_post_id=f"{original_post['owner_id']}_{original_post['id']}",
             original_group_id=original_post['owner_id'],
-            original_text=original_post.get('text'),
+            original_text=original_post.get('text', ''),
             original_images=original_post.get('images', []),
-            plagiarized_post_id=f"{plagiarized_post['group_id']}_{plagiarized_post['id']}",
-            plagiarized_group_id=plagiarized_post['group_id'],
-            plagiarized_text=plagiarized_post.get('text'),
+            plagiarized_post_id=f"{plagiarized_post['owner_id']}_{plagiarized_post['id']}",
+            plagiarized_group_id=plagiarized_post['owner_id'],
+            plagiarized_text=plagiarized_post.get('text', ''),
             plagiarized_images=plagiarized_post.get('images', []),
             text_similarity=text_similarity,
             image_similarity=image_similarity,
@@ -225,4 +220,37 @@ class MonitoringScheduler:
         # Отправляем уведомление пользователю
         await self.notification_service.send_plagiarism_notification(
             group.user_id, plagiarism, db
-        ) 
+        )
+    
+    async def create_plagiarism_record_improved(self, original_post: Dict, plagiarized_post: Dict,
+                                              group: Group, analysis_result: Dict, db: Session):
+        """Создание записи о найденном плагиате с улучшенной логикой"""
+        from models.plagiarism import Plagiarism
+        
+        # Создаем запись о плагиате
+        plagiarism = Plagiarism(
+            group_id=group.id,
+            original_post_id=f"{original_post['owner_id']}_{original_post['id']}",
+            original_group_id=original_post['owner_id'],
+            original_text=original_post.get('text', ''),
+            original_images=self._extract_images(original_post),
+            plagiarized_post_id=f"{plagiarized_post['owner_id']}_{plagiarized_post['id']}",
+            plagiarized_group_id=plagiarized_post['owner_id'],
+            plagiarized_text=plagiarized_post.get('text', ''),
+            plagiarized_images=self._extract_images(plagiarized_post),
+            text_similarity=analysis_result['text_similarity'],
+            image_similarity=analysis_result['image_similarity'],
+            overall_similarity=analysis_result['overall_similarity']
+        )
+        
+        db.add(plagiarism)
+        db.commit()
+        
+        # Отправляем уведомление пользователю только если уверенность высокая
+        if analysis_result['confidence'] >= settings.CONFIDENCE_THRESHOLD:
+            await self.notification_service.send_plagiarism_notification(
+                group.user_id, plagiarism, db
+            )
+            logger.info(f"Уведомление отправлено для плагиата с уверенностью {analysis_result['confidence']}")
+        else:
+            logger.info(f"Уведомление не отправлено из-за низкой уверенности: {analysis_result['confidence']}") 
