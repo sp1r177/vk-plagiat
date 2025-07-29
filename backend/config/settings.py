@@ -1,52 +1,48 @@
 import os
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-
-load_dotenv()
+from typing import Optional
 
 
 class Settings(BaseSettings):
     # База данных
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://user:password@localhost/plagiarism_detector")
+    DATABASE_URL: str = "postgresql://user:password@localhost/plagiarism_detector"
     
     # VK API
-    VK_ACCESS_TOKEN: str = os.getenv("VK_ACCESS_TOKEN", "")
-    VK_GROUP_TOKEN: str = os.getenv("VK_GROUP_TOKEN", "")
-    VK_APP_ID: str = os.getenv("VK_APP_ID", "")
-    VK_APP_SECRET: str = os.getenv("VK_APP_SECRET", "")
+    VK_ACCESS_TOKEN: Optional[str] = None
+    VK_GROUP_TOKEN: Optional[str] = None
+    VK_APP_ID: Optional[str] = None
+    VK_APP_SECRET: Optional[str] = None
     
     # JWT
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-here")
-    ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
-    # Мониторинг
-    MONITORING_INTERVAL_HOURS: int = 12  # 2 раза в день
-    MAX_NOTIFICATIONS_PER_DAY: int = 10
-    SIMILARITY_THRESHOLD: float = 0.8  # Повышенный порог схожести для плагиата (было 0.7)
-    
-    # Дополнительные настройки детекции плагиата
-    TEXT_SIMILARITY_THRESHOLD: float = 0.85  # Порог для текста
-    IMAGE_SIMILARITY_THRESHOLD: float = 0.90  # Порог для изображений
-    MIN_TEXT_LENGTH: int = 50  # Минимальная длина текста для анализа
-    CONFIDENCE_THRESHOLD: float = 0.7  # Порог уверенности для уведомлений
+    SECRET_KEY: str = "your-secret-key-here-change-in-production"
     
     # Платежи
-    VK_PAY_MERCHANT_ID: str = os.getenv("VK_PAY_MERCHANT_ID", "")
-    VK_PAY_SECRET_KEY: str = os.getenv("VK_PAY_SECRET_KEY", "")
-    
-    # Тарифы (в копейках)
-    PRICING = {
-        "free": {"groups": 1, "days": 1, "price": 0},
-        "basic": {"groups": 1, "days": 30, "price": 29900},
-        "standard": {"groups": 5, "days": 30, "price": 79900},
-        "premium": {"groups": 10, "days": 30, "price": 119900}
-    }
+    VK_PAY_MERCHANT_ID: Optional[str] = None
+    VK_PAY_SECRET_KEY: Optional[str] = None
     
     # Настройки приложения
-    DEBUG: bool = os.getenv("DEBUG", "False").lower() == "true"
-    HOST: str = "0.0.0.0"
-    PORT: int = 8000
+    DEBUG: bool = True
+    
+    # Настройки детекции плагиата для MVP
+    TEXT_SIMILARITY_THRESHOLD: float = 0.7  # 70% как в требованиях MVP
+    IMAGE_HAMMING_THRESHOLD: int = 10       # Расстояние Хэмминга ≤10
+    MIN_TEXT_LENGTH: int = 20               # Минимальная длина текста для анализа
+    
+    # Настройки мониторинга
+    MONITORING_INTERVAL_HOURS: int = 3      # Каждые 3 часа как в требованиях
+    MAX_POSTS_PER_GROUP: int = 100          # Максимум постов для анализа
+    MAX_GROUPS_TO_MONITOR: int = 50         # Максимум групп для мониторинга
+    
+    # Настройки кэширования
+    CACHE_DURATION_HOURS: int = 24          # Время жизни кэша
+    MAX_CACHE_SIZE: int = 1000              # Максимальный размер кэша
+    
+    # Настройки уведомлений
+    NOTIFICATION_ENABLED: bool = True
+    MAX_NOTIFICATIONS_PER_DAY: int = 10     # Максимум уведомлений в день
+    
+    class Config:
+        env_file = ".env"
 
 
 settings = Settings() 

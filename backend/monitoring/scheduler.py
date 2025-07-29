@@ -25,25 +25,31 @@ class MonitoringScheduler:
         self.notification_service = NotificationService()
     
     def start(self):
-        """Запуск планировщика"""
-        # Мониторинг в 09:00
-        self.scheduler.add_job(
-            self.run_monitoring,
-            CronTrigger(hour=9, minute=0),
-            id="morning_monitoring",
-            name="Утренний мониторинг"
-        )
-        
-        # Мониторинг в 18:00
-        self.scheduler.add_job(
-            self.run_monitoring,
-            CronTrigger(hour=18, minute=0),
-            id="evening_monitoring",
-            name="Вечерний мониторинг"
-        )
-        
-        self.scheduler.start()
-        logger.info("Планировщик мониторинга запущен")
+        """Запуск планировщика мониторинга"""
+        try:
+            # Настройка планировщика для MVP - каждые 3 часа
+            self.scheduler.add_job(
+                self.run_monitoring,
+                CronTrigger(hour=f"*/{settings.MONITORING_INTERVAL_HOURS}"),  # Каждые 3 часа
+                id="plagiarism_monitoring",
+                name="Мониторинг плагиата",
+                replace_existing=True
+            )
+            
+            # Дополнительно запускаем мониторинг при старте
+            self.scheduler.add_job(
+                self.run_monitoring,
+                'date',
+                id="initial_monitoring",
+                name="Начальный мониторинг",
+                run_date=datetime.now() + timedelta(minutes=1)
+            )
+            
+            self.scheduler.start()
+            logger.info("Планировщик мониторинга запущен")
+            
+        except Exception as e:
+            logger.error(f"Ошибка запуска планировщика: {e}")
     
     def stop(self):
         """Остановка планировщика"""
@@ -52,90 +58,89 @@ class MonitoringScheduler:
     
     async def run_monitoring(self):
         """Запуск мониторинга всех активных групп"""
-        logger.info("Начинаем мониторинг групп")
+        logger.info("Запуск мониторинга плагиата")
         
         db = SessionLocal()
         try:
-            # Получаем все активные группы
-            active_groups = db.query(Group).filter(Group.is_active == True).all()
+            # Получаем все активные группы для мониторинга
+            groups = db.query(Group).filter(
+                Group.is_active == True
+            ).limit(settings.MAX_GROUPS_TO_MONITOR).all()
             
-            for group in active_groups:
+            logger.info(f"Найдено {len(groups)} групп для мониторинга")
+            
+            # Запускаем мониторинг для каждой группы
+            for group in groups:
                 try:
                     await self.monitor_group(group, db)
+                    # Небольшая задержка между группами
+                    await asyncio.sleep(2)
                 except Exception as e:
-                    logger.error(f"Ошибка мониторинга группы {group.id}: {e}")
-            
-            logger.info(f"Мониторинг завершен. Проверено групп: {len(active_groups)}")
-            
+                    logger.error(f"Ошибка мониторинга группы {group.vk_group_id}: {e}")
+                    continue
+                    
         except Exception as e:
-            logger.error(f"Ошибка в процессе мониторинга: {e}")
+            logger.error(f"Ошибка мониторинга: {e}")
         finally:
             db.close()
     
     async def monitor_group(self, group: Group, db: Session):
         """Мониторинг конкретной группы"""
-        logger.info(f"Мониторинг группы: {group.name} (ID: {group.vk_group_id})")
-        
-        # Получаем посты группы
-        posts = await self.vk_api.get_group_posts(group.vk_group_id, count=50)
-        
-        if not posts:
-            logger.warning(f"Не удалось получить посты для группы {group.name}")
-            return
-        
-        # Обновляем статистику
-        group.posts_checked += len(posts)
-        group.last_check = datetime.utcnow()
-        
-        # Проверяем каждый пост на плагиат
-        plagiarism_found = 0
-        
-        for post in posts:
-            try:
-                if await self.check_post_for_plagiarism(post, group, db):
-                    plagiarism_found += 1
-            except Exception as e:
-                logger.error(f"Ошибка проверки поста {post.get('id')}: {e}")
-        
-        # Обновляем статистику группы
-        group.plagiarism_found += plagiarism_found
-        db.commit()
-        
-        logger.info(f"Группа {group.name}: проверено {len(posts)} постов, найдено плагиата: {plagiarism_found}")
+        try:
+            # Получаем посты группы
+            posts = await self.vk_api.get_group_posts(
+                group.vk_group_id, 
+                count=settings.MAX_POSTS_PER_GROUP
+            )
+            
+            logger.info(f"Получено {len(posts)} постов для группы {group.vk_group_id}")
+            
+            # Проверяем каждый пост на плагиат
+            for post in posts:
+                try:
+                    await self.check_post_for_plagiarism(post, group, db)
+                except Exception as e:
+                    logger.error(f"Ошибка проверки поста {post.get('id')}: {e}")
+                    continue
+                    
+        except Exception as e:
+            logger.error(f"Ошибка мониторинга группы {group.vk_group_id}: {e}")
     
     async def check_post_for_plagiarism(self, post: Dict, group: Group, db: Session) -> bool:
-        """Проверка поста на плагиат с использованием улучшенной логики"""
+        """Проверка поста на плагиат по правилам MVP"""
         
         # Проверяем, не является ли пост репостом
         if self.detector.is_repost(post):
+            logger.debug(f"Пост {post.get('id')} является репостом - пропускаем")
             return False
         
+        # Получаем текст и изображения поста
         post_text = post.get('text', '')
         post_images = self._extract_images(post)
         
-        if not post_text and not post_images:
-            return False
-        
         # Ищем похожие посты в других группах
-        similar_posts = await self.find_similar_posts(post_text, post_images, group.vk_group_id)
+        similar_posts = await self.find_similar_posts(
+            post_text, post_images, group.vk_group_id
+        )
         
         plagiarism_found = False
         
         for similar_post in similar_posts:
-            # Используем новую логику детекции
-            analysis_result = self.detector.detect_plagiarism(similar_post, post)
-            
-            # Проверяем, является ли это плагиатом
-            if analysis_result['is_plagiarism'] and analysis_result['can_report_to_vk']:
-                # Создаем запись о плагиате только если уверенность высокая
-                if analysis_result['confidence'] >= settings.CONFIDENCE_THRESHOLD:
+            try:
+                # Проверяем плагиат по правилам MVP
+                analysis_result = self.detector.detect_plagiarism(similar_post, post)
+                
+                if analysis_result['is_plagiarism']:
+                    # Создаем запись о плагиате
                     await self.create_plagiarism_record_improved(
                         similar_post, post, group, analysis_result, db
                     )
                     plagiarism_found = True
-                    logger.info(f"Найден плагиат: {analysis_result['recommendation']}")
-                else:
-                    logger.info(f"Низкая уверенность в плагиате: {analysis_result['confidence']}")
+                    logger.info(f"Обнаружен плагиат: {analysis_result['recommendation']}")
+                
+            except Exception as e:
+                logger.error(f"Ошибка анализа плагиата: {e}")
+                continue
         
         return plagiarism_found
     

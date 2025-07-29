@@ -224,3 +224,45 @@ class VKAPIService:
         except Exception as e:
             print(f"Ошибка создания URL жалобы: {e}")
             return "" 
+    
+    async def get_user_groups(self, user_id: int) -> List[Dict]:
+        """Получение групп пользователя"""
+        for attempt in range(self.max_retries):
+            try:
+                response = self.vk.groups.get(
+                    user_id=user_id,
+                    extended=1,
+                    fields="description,photo_100"
+                )
+                
+                groups = response.get("items", [])
+                return groups
+                
+            except Exception as e:
+                if hasattr(e, 'code') and self._handle_vk_error(e, f"get_user_groups({user_id})"):
+                    continue  # Повторить
+                else:
+                    logger.error(f"Ошибка получения групп пользователя {user_id}: {e}")
+                    break
+        
+        return []
+    
+    async def get_post_by_id(self, owner_id: int, post_id: str) -> Optional[Dict]:
+        """Получение поста по ID"""
+        for attempt in range(self.max_retries):
+            try:
+                response = self.vk.wall.getById(
+                    posts=f"{owner_id}_{post_id}"
+                )
+                
+                if response:
+                    return response[0]
+                
+            except Exception as e:
+                if hasattr(e, 'code') and self._handle_vk_error(e, f"get_post_by_id({owner_id}_{post_id})"):
+                    continue  # Повторить
+                else:
+                    logger.error(f"Ошибка получения поста {owner_id}_{post_id}: {e}")
+                    break
+        
+        return None 
